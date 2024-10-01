@@ -1,0 +1,31 @@
+{
+  "metrics": {
+    "metrics_collected": {
+      "jmx": {
+        "jvm": {
+          "measurement": [
+            "jvm.os.total.swap.space.size",
+            "jvm.os.system.cpu.load",
+            "jvm.os.process.cpu.load",
+            "jvm.threads.count",
+            "jvm.threads.daemon"
+          ]
+        },
+        "tomcat": {
+          "measurement": [
+            "tomcat.sessions",
+            "tomcat.rejected_sessions",
+            "tomcat.errors",
+            "tomcat.request_count",
+            "tomcat.max_time",
+            "tomcat.processing_time",
+            "tomcat.traffic.received",
+            "tomcat.traffic.sent",
+            "tomcat.threads.idle",
+            "tomcat.threads.busy"
+          ]
+        }
+      }
+    }
+  }
+}

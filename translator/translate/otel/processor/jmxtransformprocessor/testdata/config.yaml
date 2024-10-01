@@ -1,0 +1,25 @@
+transforms:
+  - include: jvm.operating.system.total.swap.space.size
+    action: update
+    new_name: java_lang_operatingsystem_totalswapspacesize
+  - include: jvm.operating.system.system.cpu.load
+    action: update
+    new_name: java_lang_operatingsystem_systemcpuload
+  - include: jvm.operating.system.process.cpu.load
+    action: update
+    new_name: java_lang_operatingsystem_processcpuload
+  - include: jvm.threads.count
+    action: update
+    new_name: jvm_threads_current
+  - include: jvm.threads.daemon
+    action: update
+    new_name: jvm_threads_daemon
+  - include: jvm.classes.loaded
+    action: update
+    new_name: jvm_classes_loaded
+  - include: jvm.memory.bytes.used
+    action: update
+    new_name: jvm_memory_bytes_used
+  - include: jvm.memory.pool.bytes.used
+    action: update
+    new_name: jvm_memory_pool_bytes_used

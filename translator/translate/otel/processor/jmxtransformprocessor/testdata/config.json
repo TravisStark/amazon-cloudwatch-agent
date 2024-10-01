@@ -1,0 +1,36 @@
+{
+  "metrics": {
+    "metrics_collected": {
+      "jmx": {
+        "jvm": {
+          "measurement": [
+            "jvm.operating.system.total.swap.space.size",
+            "jvm.operating.system.system.cpu.load",
+            "jvm.operating.system.process.cpu.load",
+            "jvm.operating.system.free.swap.space.size",
+            "jvm.operating.system.total.physical.memory.size",
+            "jvm.operating.system.free.physical.memory.size",
+            "jvm.operating.system.open.file.descriptor.count",
+            "jvm.operating.system.available.processors",
+            "jvm.threads.count",
+            "jvm.threads.daemon",
+            "jvm.classes.loaded",
+            "jvm.memory.bytes.used",
+            "jvm.memory.pool.bytes.used"
+          ]
+        },
+        "tomcat": {
+          "measurement": [
+            "tomcat.sessions",
+            "tomcat.rejected_sessions",
+            "tomcat.errors",
+            "tomcat.request_count",
+            "tomcat.max_time",
+            "tomcat.processing_time",
+            "tomcat.traffic.received"
+          ]
+        }
+      }
+    }
+  }
+}
