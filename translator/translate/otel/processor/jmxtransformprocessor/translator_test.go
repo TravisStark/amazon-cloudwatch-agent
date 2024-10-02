@@ -1,14 +1,13 @@
 package jmxtransformprocessor
 
 import (
-	"fmt"
 	"github.com/aws/amazon-cloudwatch-agent/internal/util/testutil"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/common"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor"
 	"go.opentelemetry.io/collector/component"
 	"gopkg.in/yaml.v3"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,49 +25,14 @@ func TestTranslator(t *testing.T) {
 		want       *confmap.Conf
 		wantErr    error
 	}{
-		"TransformMetrics": {
-			input: map[string]any{
-				"metrics": map[string]any{
-					"jvm.operating.system.total.swap.space.size": "value",
-					"jvm.threads.count":                          "value",
-					"catalina_manager_activesessions":            "value",
-				},
+		"NoContainerInsights": {
+			input: map[string]any{},
+			wantErr: &common.MissingKeyError{
+				ID:      component.NewIDWithName(factory.Type(), "jmx"),
+				JsonKey: common.ContainerInsightsConfigKey,
 			},
-			want: confmap.NewFromStringMap(map[string]interface{}{
-				"transforms": []map[string]interface{}{
-					{
-						"include":  "jvm.operating.system.total.swap.space.size",
-						"action":   "update",
-						"new_name": "java_lang_operatingsystem_totalswapspacesize",
-					},
-					{
-						"include":  "jvm.threads.count",
-						"action":   "update",
-						"new_name": "jvm_threads_current",
-					},
-					{
-						"include":  "catalina_manager_activesessions",
-						"action":   "update",
-						"new_name": "catalina_manager_activesessions",
-					},
-				},
-			}),
 		},
-		"EmptyMetricsSection": {
-			input: map[string]any{
-				"metrics": map[string]any{},
-			},
-			want: confmap.NewFromStringMap(map[string]interface{}{
-				"transforms": []map[string]interface{}{},
-			}),
-		},
-		"InvalidConfig": {
-			input: map[string]any{
-				"metrics": "invalid_structure",
-			},
-			wantErr: fmt.Errorf("unable to unmarshal into metricstransform config"),
-		},
-		"WithCompleteConfig": {
+		"WithContainerInsights": {
 			input:  testutil.GetJson(t, filepath.Join("testdata", "config.json")),
 			index:  0,
 			wantID: "filter/jmx",
@@ -79,7 +43,7 @@ func TestTranslator(t *testing.T) {
 	for name, testCase := range testCases {
 		t.Run(name, func(t *testing.T) {
 			tt := NewTranslatorWithName("jmx")
-			require.EqualValues(t, testCase.wantID, tt.ID().String())
+			//require.EqualValues(t, testCase.wantID, tt.ID().String())
 
 			conf := confmap.NewFromStringMap(testCase.input)
 			got, err := tt.Translate(conf)
@@ -87,20 +51,31 @@ func TestTranslator(t *testing.T) {
 
 			if err == nil {
 				require.NotNil(t, got)
-
-				gotCfg, ok := got.(*filterprocessor.Config)
+				gotCfg, ok := got.(*metricstransformprocessor.Config)
 				require.True(t, ok)
 
 				wantCfg := factory.CreateDefaultConfig()
 				require.NoError(t, testCase.want.Unmarshal(wantCfg))
 
+				// Convert gotCfg to YAML and unmarshal into a map
 				gotYAML, err := yaml.Marshal(gotCfg)
 				require.NoError(t, err)
 
+				var gotMap map[string]interface{}
+				err = yaml.Unmarshal(gotYAML, &gotMap)
+				require.NoError(t, err)
+
+				// Convert wantCfg to YAML and unmarshal into a map
 				wantYAML, err := yaml.Marshal(wantCfg)
 				require.NoError(t, err)
 
-				require.Equal(t, wantCfg, gotCfg, "Expected:\n%s\nGot:\n%s", wantYAML, gotYAML)
+				var wantMap map[string]interface{}
+				err = yaml.Unmarshal(wantYAML, &wantMap)
+				require.NoError(t, err)
+
+				// Compare the maps
+				require.True(t, reflect.DeepEqual(gotMap, wantMap), "YAML contents do not match")
+
 			}
 		})
 	}

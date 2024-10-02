@@ -35,78 +35,33 @@ func (t *translator) ID() component.ID {
 }
 
 func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
-	if conf == nil || !conf.IsSet(common.JmxConfigKey) {
-		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: common.JmxConfigKey}
+	if conf == nil || !conf.IsSet(common.ContainerInsightsConfigKey) {
+		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: common.ContainerInsightsConfigKey}
 	}
 
 	cfg := t.factory.CreateDefaultConfig().(*filterprocessor.Config)
 
-	allowedMetrics := map[string]bool{
-		"jvm.classes.loaded":                true,
-		"jvm.gc.collections.count":          true,
-		"jvm.gc.collections.elapsed":        true,
-		"jvm.memory.heap.init":              true,
-		"jvm.memory.heap.used":              true,
-		"jvm.memory.heap.committed":         true,
-		"jvm.memory.heap.max":               true,
-		"jvm.memory.nonheap.init":           true,
-		"jvm.memory.nonheap.used":           true,
-		"jvm.memory.nonheap.committed":      true,
-		"jvm.memory.nonheap.max":            true,
-		"jvm.memory.pool.init":              true,
-		"jvm.memory.pool.used":              true,
-		"jvm.memory.pool.committed":         true,
-		"jvm.memory.pool.max":               true,
-		"jvm.os.total.swap.space.size":      true,
-		"jvm.os.system.cpu.load":            true,
-		"jvm.os.process.cpu.load":           true,
-		"jvm.os.free.swap.space.size":       true,
-		"jvm.os.total.physical.memory.size": true,
-		"jvm.os.free.physical.memory.size":  true,
-		"jvm.os.open.file.descriptor.count": true,
-		"jvm.os.available.processors":       true,
-		"jvm.threads.count":                 true,
-		"jvm.threads.daemon":                true,
-		"tomcat.sessions":                   true,
-		"tomcat.rejected_sessions":          true,
-		"tomcat.errors":                     true,
-		"tomcat.request_count":              true,
-		"tomcat.max_time":                   true,
-		"tomcat.processing_time":            true,
-		"tomcat.traffic.received":           true,
-		"tomcat.traffic.sent":               true,
-		"tomcat.threads.idle":               true,
-		"tomcat.threads.busy":               true,
-	}
-
-	includeMetricNames := []string{}
-
-	jmxMap := common.GetIndexedMap(conf, common.JmxConfigKey, 0)
-
-	//jvm metrics
-	if jvmMap, ok := jmxMap["jvm"].(map[string]any); ok {
-		if measurements, ok := jvmMap["measurement"].([]interface{}); ok {
-			for _, measurement := range measurements {
-				if metricName, ok := measurement.(string); ok {
-					if _, allowed := allowedMetrics[metricName]; allowed {
-						includeMetricNames = append(includeMetricNames, metricName)
-					}
-				}
-			}
-		}
-	}
-
-	//tomcat metrics
-	if tomcatMap, ok := jmxMap["tomcat"].(map[string]any); ok {
-		if measurements, ok := tomcatMap["measurement"].([]interface{}); ok {
-			for _, measurement := range measurements {
-				if metricName, ok := measurement.(string); ok {
-					if _, allowed := allowedMetrics[metricName]; allowed {
-						includeMetricNames = append(includeMetricNames, metricName)
-					}
-				}
-			}
-		}
+	includeMetricNames := []string{
+		"jvm.classes.loaded",
+		"jvm.memory.bytes.used",
+		"jvm.memory.pool.bytes.used",
+		"jvm.operating.system.total.swap.space.size",
+		"jvm.operating.system.system.cpu.load",
+		"jvm.operating.system.process.cpu.load",
+		"jvm.operating.system.free.swap.space.size",
+		"jvm.operating.system.total.physical.memory.size",
+		"jvm.operating.system.free.physical.memory.size",
+		"jvm.operating.system.open.file.descriptor.count",
+		"jvm.operating.system.available.processors",
+		"jvm.threads.count",
+		"jvm.threads.daemon",
+		"tomcat.sessions",
+		"tomcat.rejected_sessions",
+		"tomcat.traffic.received",
+		"tomcat.traffic.sent",
+		"tomcat.request_count",
+		"tomcat.errors",
+		"tomcat.processing_time",
 	}
 
 	c := confmap.NewFromStringMap(map[string]interface{}{

@@ -39,74 +39,8 @@ func TestTranslator(t *testing.T) {
 			wantID: "filter/jmx",
 			wantErr: &common.MissingKeyError{
 				ID:      component.NewIDWithName(factory.Type(), "jmx"),
-				JsonKey: common.JmxConfigKey,
+				JsonKey: common.ContainerInsightsConfigKey,
 			},
-		},
-		"ConfigWithJmxTargetWithMetricName": {
-			input: map[string]any{
-				"metrics": map[string]any{
-					"metrics_collected": map[string]any{
-						"jmx": []any{
-							map[string]any{
-								"jvm": map[string]any{
-									"measurement": []any{
-										"jvm.os.total.swap.space.size",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			index:  0,
-			wantID: "filter/jmx",
-			want: confmap.NewFromStringMap(map[string]any{
-				"metrics": map[string]any{
-					"include": map[string]any{
-						"match_type":   "strict",
-						"metric_names": []any{"jvm.os.total.swap.space.size"},
-					},
-				},
-			}),
-		},
-		"ConfigWithMultiple": {
-			input: map[string]any{
-				"metrics": map[string]any{
-					"metrics_collected": map[string]any{
-						"jmx": map[string]any{
-							"jvm": map[string]any{
-								"measurement": []any{
-									"jvm.os.system.cpu.load",
-									"jvm.os.process.cpu.load",
-									"jvm.threads.count",
-								},
-							},
-							"tomcat": map[string]any{
-								"measurement": []any{
-									"tomcat.sessions",
-									"tomcat.errors",
-								},
-							},
-						},
-					},
-				},
-			},
-			index:  0,
-			wantID: "filter/jmx",
-			want: confmap.NewFromStringMap(map[string]any{
-				"metrics": map[string]any{
-					"include": map[string]any{
-						"match_type": "strict",
-						"metric_names": []any{
-							"jvm.os.system.cpu.load",
-							"jvm.os.process.cpu.load",
-							"jvm.threads.count",
-							"tomcat.sessions",
-							"tomcat.errors",
-						},
-					},
-				},
-			}),
 		},
 		"WithCompleteConfig": {
 			input:  testutil.GetJson(t, filepath.Join("testdata", "config.json")),

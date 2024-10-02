@@ -50,6 +50,7 @@ func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators
 	translators.Receivers.Set(otlp.NewTranslatorWithName(common.JmxKey))
 
 	translators.Processors.Set(jmxfilterprocessor.NewTranslatorWithName(common.JmxKey))
+	//add attribute processor
 	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(common.JmxKey))
 	translators.Exporters.Set(debug.NewTranslatorWithName(common.JmxKey)) //this might need to be changed?
 

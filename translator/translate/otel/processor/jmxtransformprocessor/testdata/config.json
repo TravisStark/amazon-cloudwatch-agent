@@ -1,36 +1,20 @@
 {
-  "metrics": {
+  "agent": {
+    "region": "us-east-1"
+  },
+  "logs": {
     "metrics_collected": {
-      "jmx": {
-        "jvm": {
-          "measurement": [
-            "jvm.operating.system.total.swap.space.size",
-            "jvm.operating.system.system.cpu.load",
-            "jvm.operating.system.process.cpu.load",
-            "jvm.operating.system.free.swap.space.size",
-            "jvm.operating.system.total.physical.memory.size",
-            "jvm.operating.system.free.physical.memory.size",
-            "jvm.operating.system.open.file.descriptor.count",
-            "jvm.operating.system.available.processors",
-            "jvm.threads.count",
-            "jvm.threads.daemon",
-            "jvm.classes.loaded",
-            "jvm.memory.bytes.used",
-            "jvm.memory.pool.bytes.used"
-          ]
-        },
-        "tomcat": {
-          "measurement": [
-            "tomcat.sessions",
-            "tomcat.rejected_sessions",
-            "tomcat.errors",
-            "tomcat.request_count",
-            "tomcat.max_time",
-            "tomcat.processing_time",
-            "tomcat.traffic.received"
-          ]
-        }
+      "emf": {
+      },
+      "kubernetes": {
+        "cluster_name": "TestCluster",
+        "metrics_collection_interval": 30,
+        "disable_metric_extraction": true,
+        "prefer_full_pod_name": true,
+        "accelerated_compute_metrics": false
       }
-    }
+    },
+    "force_flush_interval": 5,
+    "endpoint_override":"https://fake_endpoint"
   }
 }

@@ -5,8 +5,6 @@ package containerinsights
 
 import (
 	"fmt"
-	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxfilterprocessor"
-	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxtransformprocessor"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
@@ -46,43 +44,31 @@ func (t *translator) ID() component.ID {
 // Translate creates a pipeline for container insights if the logs.metrics_collected.ecs or logs.metrics_collected.kubernetes
 // section is present.
 func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators, error) {
-	if conf == nil { //change this before merging
+	if conf == nil || (!conf.IsSet(ecsKey) && !conf.IsSet(eksKey)) {
 		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: fmt.Sprint(ecsKey, " or ", eksKey)}
 	}
-
-	// Explicitly specify the type parameter for the translator map
-	processors := common.NewTranslatorMap[component.Config]()
 
 	// Append the metricstransformprocessor only if enhanced container insights is enabled
 	enhancedContainerInsightsEnabled := awscontainerinsight.EnhancedContainerInsightsEnabled(conf)
 	if enhancedContainerInsightsEnabled {
-		processors.Set(metricstransformprocessor.NewTranslatorWithName(pipelineName))
+		processors := common.NewTranslatorMap(metricstransformprocessor.NewTranslatorWithName(pipelineName))
 		acceleratedComputeMetricsEnabled := awscontainerinsight.AcceleratedComputeMetricsEnabled(conf)
 		if acceleratedComputeMetricsEnabled {
 			processors.Set(gpu.NewTranslatorWithName(pipelineName))
 		}
+		processors.Set(batchprocessor.NewTranslatorWithNameAndSection(pipelineName, common.LogsKey))
+		return &common.ComponentTranslators{
+			Receivers:  common.NewTranslatorMap(awscontainerinsight.NewTranslator()),
+			Processors: processors, // EKS & ECS CI sit under metrics_collected in "logs"
+			Exporters:  common.NewTranslatorMap(awsemf.NewTranslatorWithName(pipelineName)),
+			Extensions: common.NewTranslatorMap(agenthealth.NewTranslator(component.DataTypeLogs, []string{agenthealth.OperationPutLogEvents})),
+		}, nil
 	}
-
-	// Check if JMX is configured and append the jmxfilterprocessor and jmxtransformprocessor
-	if isJMXConfigured(conf, -1) {
-		processors.Set(jmxfilterprocessor.NewTranslatorWithName(pipelineName))
-		processors.Set(jmxtransformprocessor.NewTranslatorWithName(pipelineName))
-	}
-
-	processors.Set(batchprocessor.NewTranslatorWithNameAndSection(pipelineName, common.LogsKey))
 
 	return &common.ComponentTranslators{
 		Receivers:  common.NewTranslatorMap(awscontainerinsight.NewTranslator()),
-		Processors: processors,
+		Processors: common.NewTranslatorMap(batchprocessor.NewTranslatorWithNameAndSection(pipelineName, common.LogsKey)), // EKS & ECS CI sit under metrics_collected in "logs"
 		Exporters:  common.NewTranslatorMap(awsemf.NewTranslatorWithName(pipelineName)),
 		Extensions: common.NewTranslatorMap(agenthealth.NewTranslator(component.DataTypeLogs, []string{agenthealth.OperationPutLogEvents})),
 	}, nil
-}
-
-func isJMXConfigured(conf *confmap.Conf, index int) bool {
-	jmxMap := common.GetIndexedMap(conf, common.JmxConfigKey, index)
-	if len(jmxMap) == 0 {
-		return false
-	}
-	return true
 }

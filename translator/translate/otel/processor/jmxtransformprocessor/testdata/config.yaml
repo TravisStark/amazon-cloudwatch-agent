@@ -8,6 +8,21 @@ transforms:
   - include: jvm.operating.system.process.cpu.load
     action: update
     new_name: java_lang_operatingsystem_processcpuload
+  - include: jvm.operating.system.free.swap.space.size
+    action: update
+    new_name: java_lang_operatingsystem_freeswapspacesize
+  - include: jvm.operating.system.total.physical.memory.size
+    action: update
+    new_name: java_lang_operatingsystem_totalphysicalmemorysize
+  - include: jvm.operating.system.free.physical.memory.size
+    action: update
+    new_name: java_lang_operatingsystem_freephysicalmemorysize
+  - include: jvm.operating.system.open.file.descriptor.count
+    action: update
+    new_name: java_lang_operatingsystem_openfiledescriptorcount
+  - include: jvm.operating.system.available.processors
+    action: update
+    new_name: java_lang_operatingsystem_availableprocessors
   - include: jvm.threads.count
     action: update
     new_name: jvm_threads_current
@@ -23,3 +38,24 @@ transforms:
   - include: jvm.memory.pool.bytes.used
     action: update
     new_name: jvm_memory_pool_bytes_used
+  - include: tomcat.sessions
+    action: update
+    new_name: catalina_manager_activesessions
+  - include: tomcat.rejected_sessions
+    action: update
+    new_name: catalina_manager_rejectedsessions
+  - include: tomcat.errors
+    action: update
+    new_name: catalina_globalrequestprocessor_errorcount
+  - include: tomcat.request_count
+    action: update
+    new_name: catalina_globalrequestprocessor_requestcount
+  - include: tomcat.processing_time
+    action: update
+    new_name: catalina_globalrequestprocessor_processingtime
+  - include: tomcat.traffic.received
+    action: update
+    new_name: catalina_globalrequestprocessor_bytesreceived
+  - include: tomcat.traffic.sent
+    action: update
+    new_name: catalina_globalrequestprocessor_bytessent

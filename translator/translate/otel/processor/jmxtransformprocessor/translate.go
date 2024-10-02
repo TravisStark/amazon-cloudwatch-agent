@@ -16,6 +16,9 @@ import (
 
 // Mapping from JMX metrics to transform processor metrics
 var metricMapping = map[string]string{
+	"jvm.classes.loaded":                              "jvm_classes_loaded",
+	"jvm.memory.bytes.used":                           "jvm_memory_bytes_used",
+	"jvm.memory.pool.bytes.used":                      "jvm_memory_pool_bytes_used",
 	"jvm.operating.system.total.swap.space.size":      "java_lang_operatingsystem_totalswapspacesize",
 	"jvm.operating.system.system.cpu.load":            "java_lang_operatingsystem_systemcpuload",
 	"jvm.operating.system.process.cpu.load":           "java_lang_operatingsystem_processcpuload",
@@ -26,16 +29,13 @@ var metricMapping = map[string]string{
 	"jvm.operating.system.available.processors":       "java_lang_operatingsystem_availableprocessors",
 	"jvm.threads.count":                               "jvm_threads_current",
 	"jvm.threads.daemon":                              "jvm_threads_daemon",
-	"catalina_manager_activesessions":                 "catalina_manager_activesessions",
-	"catalina_manager_rejectedsessions":               "catalina_manager_rejectedsessions",
-	"catalina_globalrequestprocessor_bytesreceived":   "catalina_globalrequestprocessor_bytesreceived",
-	"catalina_globalrequestprocessor_bytessent":       "catalina_globalrequestprocessor_bytessent",
-	"catalina_globalrequestprocessor_requestcount":    "catalina_globalrequestprocessor_requestcount",
-	"catalina_globalrequestprocessor_errorcount":      "catalina_globalrequestprocessor_errorcount",
-	"catalina_globalrequestprocessor_processingtime":  "catalina_globalrequestprocessor_processingtime",
-	"jvm.classes.loaded":                              "jvm_classes_loaded",
-	"jvm.memory.bytes.used":                           "jvm_memory_bytes_used",
-	"jvm.memory.pool.bytes.used":                      "jvm_memory_pool_bytes_used",
+	"tomcat.sessions":                                 "catalina_manager_activesessions",
+	"tomcat.rejected_sessions":                        "catalina_manager_rejectedsessions",
+	"tomcat.traffic.received":                         "catalina_globalrequestprocessor_bytesreceived",
+	"tomcat.traffic.sent":                             "catalina_globalrequestprocessor_bytessent",
+	"tomcat.request_count":                            "catalina_globalrequestprocessor_requestcount",
+	"tomcat.errors":                                   "catalina_globalrequestprocessor_errorcount",
+	"tomcat.processing_time":                          "catalina_globalrequestprocessor_processingtime",
 }
 
 type translator struct {
@@ -54,6 +54,10 @@ func (t *translator) ID() component.ID {
 }
 
 func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
+	if conf == nil || !conf.IsSet(common.ContainerInsightsConfigKey) {
+		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: common.ContainerInsightsConfigKey}
+
+	}
 	cfg := t.factory.CreateDefaultConfig().(*metricstransformprocessor.Config)
 	transformRules := []map[string]interface{}{}
 

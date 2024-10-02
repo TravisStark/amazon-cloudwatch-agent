@@ -86,47 +86,6 @@ func TestTranslator(t *testing.T) {
 				extensions:   []string{"agenthealth/logs"},
 			},
 		},
-		"WithKubernetes/WithJMX": {
-			input: map[string]interface{}{
-				"metrics": map[string]interface{}{
-					"namespace": "jmx-test",
-					"metrics_destinations": map[string]interface{}{
-						"cloudwatch": map[string]interface{}{},
-					},
-					"metrics_collected": map[string]interface{}{
-						"jmx": map[string]interface{}{
-							"jvm": map[string]interface{}{
-								"measurement": []interface{}{
-									"jvm.os.total.swap.space.size",
-									"jvm.os.system.cpu.load",
-									"jvm.os.process.cpu.load",
-									"jvm.os.free.swap.space.size",
-									"jvm.os.total.physical.memory.size",
-									"jvm.os.free.physical.memory.size",
-									"jvm.os.open.file.descriptor.count",
-									"jvm.os.available.processors",
-									"jvm.threads.daemon",
-									"jvm.threads.count",
-								},
-							},
-							"tomcat": map[string]interface{}{
-								"measurement": []interface{}{
-									"tomcat.rejected_sessions",
-									"tomcat.sessions",
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &want{
-				pipelineType: "metrics/containerinsights",
-				receivers:    []string{"awscontainerinsightreceiver"},
-				processors:   []string{"jmxfilter/containerinsights", "jmxtransform/containerinsights", "batch/containerinsights"},
-				exporters:    []string{"awsemf/containerinsights"},
-				extensions:   []string{"agenthealth/logs"},
-			},
-		},
 	}
 	for name, testCase := range testCases {
 		t.Run(name, func(t *testing.T) {

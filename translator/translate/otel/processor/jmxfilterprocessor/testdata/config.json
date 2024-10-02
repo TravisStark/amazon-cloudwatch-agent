@@ -1,31 +1,20 @@
 {
-  "metrics": {
+  "agent": {
+    "region": "us-east-1"
+  },
+  "logs": {
     "metrics_collected": {
-      "jmx": {
-        "jvm": {
-          "measurement": [
-            "jvm.os.total.swap.space.size",
-            "jvm.os.system.cpu.load",
-            "jvm.os.process.cpu.load",
-            "jvm.threads.count",
-            "jvm.threads.daemon"
-          ]
-        },
-        "tomcat": {
-          "measurement": [
-            "tomcat.sessions",
-            "tomcat.rejected_sessions",
-            "tomcat.errors",
-            "tomcat.request_count",
-            "tomcat.max_time",
-            "tomcat.processing_time",
-            "tomcat.traffic.received",
-            "tomcat.traffic.sent",
-            "tomcat.threads.idle",
-            "tomcat.threads.busy"
-          ]
-        }
+      "emf": {
+      },
+      "kubernetes": {
+        "cluster_name": "TestCluster",
+        "metrics_collection_interval": 30,
+        "disable_metric_extraction": true,
+        "prefer_full_pod_name": true,
+        "accelerated_compute_metrics": false
       }
-    }
+    },
+    "force_flush_interval": 5,
+    "endpoint_override":"https://fake_endpoint"
   }
 }
