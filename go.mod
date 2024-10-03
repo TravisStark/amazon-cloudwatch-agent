@@ -117,7 +117,6 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/resourcetotelemetry v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.103.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.103.0

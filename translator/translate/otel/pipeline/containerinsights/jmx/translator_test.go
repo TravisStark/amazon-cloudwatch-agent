@@ -47,7 +47,7 @@ func TestTranslator(t *testing.T) {
 				pipelineType: "metrics/containerinsightsjmx",
 				receivers:    []string{"otlp/jmx"},
 				processors:   []string{"filter/jmx", "transform/jmx"},
-				exporters:    []string{"awsemf/jmx"},
+				exporters:    []string{"awsemfj/jmx"},
 				extensions:   []string{},
 			},
 		},
