@@ -9,7 +9,6 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsxrayexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/awsproxy"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor"
@@ -83,7 +82,6 @@ func Factories() (otelcol.Factories, error) {
 	if factories.Extensions, err = extension.MakeFactoryMap(
 		agenthealth.NewFactory(),
 		awsproxy.NewFactory(),
-		sigv4authextension.NewFactory(),
 	); err != nil {
 		return otelcol.Factories{}, err
 	}

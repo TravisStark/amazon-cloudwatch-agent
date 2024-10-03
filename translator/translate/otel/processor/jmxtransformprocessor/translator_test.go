@@ -73,18 +73,18 @@ func TestTranslator(t *testing.T) {
 				err = yaml.Unmarshal(wantYAML, &wantMap)
 				require.NoError(t, err)
 
-				// Assert "metricstatements" to the expected type.
-				gotMetricStatementsRawMetric, ok := gotMap["metricstatements"].([]interface{})[0].(map[string]interface{})["statements"].([]interface{})
-				gotMetricStatementsRawMetric2, ok := gotMap["metricstatements"].([]interface{})[1].(map[string]interface{})["statements"].([]interface{})
+				//This gets the list of statements we got from translate
+				gotMetricContextStatements, ok := gotMap["metricstatements"].([]interface{})[0].(map[string]interface{})["statements"].([]interface{})
+				gotDatapointContextStatement, ok := gotMap["metricstatements"].([]interface{})[1].(map[string]interface{})["statements"].([]interface{})
 
-				wantMetricStatementsRawMetric, ok := wantMap["metric_statements"].([]interface{})[0].(map[string]interface{})["statements"].([]interface{})
-				wantMetricStatementsRawMetric2, ok := wantMap["metric_statements"].([]interface{})[1].(map[string]interface{})["statements"].([]interface{})
+				wantMetricContextStatements, ok := wantMap["metricstatements"].([]interface{})[0].(map[string]interface{})["statements"].([]interface{})
+				wantDatapointContextStatement, ok := wantMap["metricstatements"].([]interface{})[1].(map[string]interface{})["statements"].([]interface{})
 
 				// Compare 'nameList' with another list
-				if !containsSameElements(gotMetricStatementsRawMetric, wantMetricStatementsRawMetric) {
+				if !containsSameElements(gotMetricContextStatements, wantMetricContextStatements) {
 					t.Fatal("statements in 'metricstatements[]' do not match")
 				}
-				if !containsSameElements(gotMetricStatementsRawMetric2, wantMetricStatementsRawMetric2) {
+				if !containsSameElements(gotDatapointContextStatement, wantDatapointContextStatement) {
 					t.Fatal("statements in 'metricstatements[]' do not match")
 				}
 

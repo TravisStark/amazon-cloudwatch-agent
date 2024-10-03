@@ -6,7 +6,6 @@ package containerinsightsjmx
 import (
 	"fmt"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/awsemf"
-	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxattributeprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxfilterprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxtransformprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/receiver/otlp"
@@ -56,9 +55,6 @@ func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators
 
 	translators.Receivers.Set(otlp.NewTranslatorWithName(common.JmxKey))
 	translators.Processors.Set(jmxfilterprocessor.NewTranslatorWithName(common.JmxKey))
-	translators.Processors.Set(jmxattributeprocessor.NewTranslatorWithName("General"))
-	translators.Processors.Set(jmxattributeprocessor.NewTranslatorWithName("JvmMemoryBytesUsed"))
-	translators.Processors.Set(jmxattributeprocessor.NewTranslatorWithName("JvmMemoryPoolBytesUsed"))
 	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(common.JmxKey))
 	translators.Exporters.Set(awsemf.NewTranslatorWithName(common.JmxKey)) //this might need to be changed?
 
