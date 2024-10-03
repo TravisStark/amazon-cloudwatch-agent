@@ -28,6 +28,17 @@ func TestTranslator(t *testing.T) {
 		detector        func() (eksdetector.Detector, error)
 		isEKSDataStore  func() eksdetector.IsEKSCache
 	}{
+		"WithContainerInsightsJMX": {
+			input: map[string]interface{}{
+				"logs": map[string]interface{}{
+					"metrics_collected": map[string]interface{}{
+						"kubernetes": map[string]interface{}{
+							"cluster_name": "TestCluster",
+						},
+					},
+				},
+			},
+		},
 		"WithInvalidConfig": {
 			input:           "",
 			wantErrContains: "invalid json config",

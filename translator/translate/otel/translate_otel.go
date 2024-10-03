@@ -18,6 +18,8 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap/zapcore"
 
+	containerinsightsjmx "github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/pipeline/containerinsights/jmx"
+
 	"github.com/aws/amazon-cloudwatch-agent/translator/context"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/common"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/pipeline"
@@ -60,6 +62,7 @@ func Translate(jsonConfig interface{}, os string) (*otelcol.Config, error) {
 	translators.Set(prometheus.NewTranslator())
 	translators.Set(emf_logs.NewTranslator())
 	translators.Set(xray.NewTranslator())
+	translators.Set(containerinsightsjmx.NewTranslator())
 	translators.Merge(jmx.NewTranslators(conf))
 	translators.Merge(registry)
 	pipelines, err := pipeline.NewTranslator(translators).Translate(conf)

@@ -4,8 +4,9 @@
 package containerinsightsjmx
 
 import (
-	"github.com/aws/amazon-cloudwatch-agent/cfg/envconfig"
-	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/debug"
+	"fmt"
+	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/awsemf"
+	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxattributeprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxfilterprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxtransformprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/receiver/otlp"
@@ -18,6 +19,12 @@ import (
 
 const (
 	pipelineName = "containerinsightsjmx"
+)
+
+var (
+	baseKey = common.ConfigKey(common.LogsKey, common.MetricsCollectedKey)
+	eksKey  = common.ConfigKey(baseKey, common.KubernetesKey)
+	ecsKey  = common.ConfigKey(baseKey, common.ECSKey)
 )
 
 type translator struct {
@@ -36,10 +43,10 @@ func (t *translator) ID() component.ID {
 // Translate creates a pipeline for container insights if the logs.metrics_collected.ecs or logs.metrics_collected.kubernetes
 // section is present.
 func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators, error) {
-	//Checking if container and jmx is configured
-	if conf == nil || !envconfig.IsRunningInContainer() || !isJMXConfigured(conf) {
-		return nil, nil
+	if conf == nil || (!conf.IsSet(ecsKey) && !conf.IsSet(eksKey)) {
+		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: fmt.Sprint(ecsKey, " or ", eksKey)}
 	}
+
 	translators := common.ComponentTranslators{
 		Receivers:  common.NewTranslatorMap[component.Config](),
 		Processors: common.NewTranslatorMap[component.Config](),
@@ -48,17 +55,13 @@ func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators
 	}
 
 	translators.Receivers.Set(otlp.NewTranslatorWithName(common.JmxKey))
-
 	translators.Processors.Set(jmxfilterprocessor.NewTranslatorWithName(common.JmxKey))
-	//add attribute processor
+	translators.Processors.Set(jmxattributeprocessor.NewTranslatorWithName("General"))
+	translators.Processors.Set(jmxattributeprocessor.NewTranslatorWithName("JvmMemoryBytesUsed"))
+	translators.Processors.Set(jmxattributeprocessor.NewTranslatorWithName("JvmMemoryPoolBytesUsed"))
 	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(common.JmxKey))
-	translators.Exporters.Set(debug.NewTranslatorWithName(common.JmxKey)) //this might need to be changed?
+	translators.Exporters.Set(awsemf.NewTranslatorWithName(common.JmxKey)) //this might need to be changed?
 
 	return &translators, nil
 
-}
-
-func isJMXConfigured(conf *confmap.Conf) bool {
-	boolean, _ := common.GetBool(conf, common.JmxConfigKey)
-	return boolean
 }

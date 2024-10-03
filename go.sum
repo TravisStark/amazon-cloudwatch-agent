@@ -1139,6 +1139,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.103.0
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.103.0/go.mod h1:o8BPP4DM2SkdkPJxJOdmgxKz5DftGcuyUXgqf5MoWAw=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheusremotewrite v0.103.0 h1:MquBpfLZRaGnQeeIF3Kn+bQNXRLZtKTWGEysbNnxcRo=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheusremotewrite v0.103.0/go.mod h1:+3rCl7Z3Zm4ZZOyX9lMmaAoN8NeeCXUOmR/tysR631g=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.103.0 h1:c5sOZWBMD/gyKxqwGgS6cwLdvkg6W8I3/0RZOm84xA0=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.103.0/go.mod h1:2CG+06d3sh+O36maAs2TPAbNRXZ0zcqY2kH5pEABrzg=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.103.0 h1:xerHvPmP765eM4U5eaSvfRpXiV3ioCJjLR5ydi6BgVs=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.103.0/go.mod h1:5yUxKVs+fx/MtDkGKlJWOTnOZIgOYdE+Zpya3mAdaQw=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.103.0 h1:u2ZcBCuOXpD7FIm+LZrhEMhi/Ny/mhivAfuCUpPzrUg=
