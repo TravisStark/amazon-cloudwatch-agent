@@ -27,7 +27,7 @@ import (
 var defaultKubernetesConfig string
 
 const (
-	metricNamespace               = "metric_namespace"
+	metricNamespace               = "namespace"
 	k8sDefaultCloudWatchNamespace = "ContainerInsights/Prometheus"
 	ec2DefaultCloudWatchNamespace = "CWAgent/Prometheus"
 	metricDeclartion              = "metric_declaration"
@@ -115,10 +115,10 @@ func setKubernetesFields(conf *confmap.Conf, cfg *awsemfexporter.Config) error {
 	if err != nil {
 		return err
 	}
-	err = setJmxMetricDeclarations(conf, cfg)
-	if err != nil {
-		return err
-	}
+	//err = setJmxMetricDeclarations(conf, cfg)
+	//if err != nil {
+	//	return err
+	//}
 	return nil
 }
 
@@ -127,64 +127,58 @@ func setJmxNamespace(conf *confmap.Conf, cfg *awsemfexporter.Config) error {
 		cfg.Namespace = namespace
 		return nil
 	}
-	if context.CurrentContext().RunInContainer() {
-		cfg.Namespace = k8sDefaultCloudWatchNamespace
-	} else {
-		cfg.Namespace = ec2DefaultCloudWatchNamespace
-	}
 
-	return nil
-
+	return fmt.Errorf("failed to set JMX namespace: namespace not found in configuration")
 }
 
-func setJmxMetricDeclarations(conf *confmap.Conf, cfg *awsemfexporter.Config) error {
-	metricDeclarationKey := common.ConfigKey(kubernetesBasePathKey)
-
-	metricDeclarations := conf.Get(metricDeclarationKey)
-
-	if metricDeclarations == nil {
-		return fmt.Errorf("metric declarations cannot be nil")
-	}
-
-	mdList := metricDeclarations.([]map[string]interface{})
-
-	var declarations []*awsemfexporter.MetricDeclaration
-
-	for _, md := range mdList {
-		declaration := &awsemfexporter.MetricDeclaration{}
-
-		// Handle dimensions
-		if dimensions, ok := md["dimensions"]; ok {
-			if dimList, ok := dimensions.([]interface{}); ok {
-				var parsedDimensions [][]string
-				for _, dim := range dimList {
-					dimSlice := dim.([]string)
-					var dimStrings []string
-					for _, d := range dimSlice {
-						dimStrings = append(dimStrings, d)
-
-					}
-					parsedDimensions = append(parsedDimensions, dimStrings)
-
-				}
-				declaration.Dimensions = parsedDimensions
-			} else {
-				return fmt.Errorf("invalid dimensions format")
-			}
-		}
-
-		if metricSelectors, ok := md["metric_name_selectors"]; ok {
-			if metricSelectorsList, ok := metricSelectors.([]string); ok {
-				declaration.MetricNameSelectors = metricSelectorsList
-			} else {
-				return fmt.Errorf("invalid metric selectors format")
-			}
-		} else {
-			continue
-		}
-
-		declarations = append(declarations, declaration)
-	}
-	cfg.MetricDeclarations = declarations
-	return nil
-}
+//func setJmxMetricDeclarations(conf *confmap.Conf, cfg *awsemfexporter.Config) error {
+//	metricDeclarationKey := common.ConfigKey(kubernetesBasePathKey)
+//
+//	metricDeclarations := conf.Get(metricDeclarationKey)
+//
+//	if metricDeclarations == nil {
+//		return fmt.Errorf("metric declarations cannot be nil")
+//	}
+//
+//	mdList := metricDeclarations.([]map[string]interface{})
+//
+//	var declarations []*awsemfexporter.MetricDeclaration
+//
+//	for _, md := range mdList {
+//		declaration := &awsemfexporter.MetricDeclaration{}
+//
+//		// Handle dimensions
+//		if dimensions, ok := md["dimensions"]; ok {
+//			if dimList, ok := dimensions.([]interface{}); ok {
+//				var parsedDimensions [][]string
+//				for _, dim := range dimList {
+//					dimSlice := dim.([]string)
+//					var dimStrings []string
+//					for _, d := range dimSlice {
+//						dimStrings = append(dimStrings, d)
+//
+//					}
+//					parsedDimensions = append(parsedDimensions, dimStrings)
+//
+//				}
+//				declaration.Dimensions = parsedDimensions
+//			} else {
+//				return fmt.Errorf("invalid dimensions format")
+//			}
+//		}
+//
+//		if metricSelectors, ok := md["metric_name_selectors"]; ok {
+//			if metricSelectorsList, ok := metricSelectors.([]string); ok {
+//				declaration.MetricNameSelectors = metricSelectorsList
+//			} else {
+//				return fmt.Errorf("invalid metric selectors format")
+//			}
+//		} else {
+//			continue
+//		}
+//
+//		declarations = append(declarations, declaration)
+//	}
+//	cfg.MetricDeclarations = declarations
+//	return nil
+//}

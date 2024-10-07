@@ -30,10 +30,14 @@ func TestTranslator(t *testing.T) {
 	}{
 		"WithContainerInsightsJMX": {
 			input: map[string]interface{}{
+				"agent": map[string]interface{}{
+					"debug": true,
+				},
 				"logs": map[string]interface{}{
 					"metrics_collected": map[string]interface{}{
 						"kubernetes": map[string]interface{}{
 							"cluster_name": "TestCluster",
+							"namespace":    "siprmp",
 						},
 					},
 				},

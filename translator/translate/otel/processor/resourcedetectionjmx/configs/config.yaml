@@ -1,0 +1,7 @@
+detectors: [env, eks]
+timeout: 15s
+override: false
+eks:
+  resource_attributes:
+    k8s.cluster.name:
+      enabled: true

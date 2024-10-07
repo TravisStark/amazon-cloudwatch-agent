@@ -5,9 +5,12 @@ package containerinsightsjmx
 
 import (
 	"fmt"
-	awsemfjmx "github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/awsemf/jmx"
+	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/debug"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxfilterprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxtransformprocessor"
+	metricstransformprocessorjmx "github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/metrictransformprocessorjmx"
+	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/resourcedetectionjmx"
+	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/resourceprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/receiver/otlp"
 
 	"go.opentelemetry.io/collector/component"
@@ -18,6 +21,7 @@ import (
 
 const (
 	pipelineName = "containerinsightsjmx"
+	clusterName  = "cluster_name"
 )
 
 var (
@@ -54,9 +58,15 @@ func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators
 	}
 
 	translators.Receivers.Set(otlp.NewTranslatorWithName(common.JmxKey))
-	translators.Processors.Set(jmxfilterprocessor.NewTranslatorWithName(common.JmxKey))
-	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(common.JmxKey))
-	translators.Exporters.Set(awsemfjmx.NewTranslatorWithName(common.JmxKey)) //this might need to be changed?
+	translators.Processors.Set(jmxfilterprocessor.NewTranslatorWithName(pipelineName)) //Filter metrics
+	if !conf.IsSet(common.ConfigKey(eksKey, clusterName)) {                            //only need the cluster name if not set
+		translators.Processors.Set(resourcedetectionjmx.NewTranslator()) //Adds k8s cluster name
+	}
+	translators.Processors.Set(resourceprocessor.NewTranslator(resourceprocessor.WithName("jmxResource"))) //change resource attribute names
+	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(pipelineName))
+	translators.Processors.Set(metricstransformprocessorjmx.NewTranslatorWithName(pipelineName))
+	translators.Exporters.Set(debug.NewTranslator())
+	//translators.Exporters.Set(awsemfjmx.NewTranslatorWithName(common.JmxKey))
 
 	return &translators, nil
 

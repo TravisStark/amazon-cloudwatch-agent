@@ -1,0 +1,17 @@
+{
+  "agent": {
+    "region": "us-west-2",
+    "debug": true
+  },
+  "logs": {
+    "metrics_collected": {
+      "emf": {
+      },
+      "kubernetes": {
+        "cluster_name": "jvmCluster",
+        "namespace":"siprmp-jmx"
+      }
+    },
+    "force_flush_interval": 5
+  }
+}

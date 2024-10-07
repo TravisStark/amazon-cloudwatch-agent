@@ -187,6 +187,7 @@ func reloadLoop(
 			log.Fatalf("E! [telegraf] Error running agent: %v", err)
 		}
 	}
+
 }
 
 // loadEnvironmentVariables updates OS ENV vars with key/val from the given JSON file.

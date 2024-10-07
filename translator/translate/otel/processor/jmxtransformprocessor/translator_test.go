@@ -1,6 +1,7 @@
 package jmxtransformprocessor
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/aws/amazon-cloudwatch-agent/internal/util/testutil"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/common"

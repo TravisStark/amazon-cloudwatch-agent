@@ -54,19 +54,37 @@ func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
 
 	cfg := t.factory.CreateDefaultConfig().(*resourceprocessor.Config)
 
-	c := confmap.NewFromStringMap(map[string]any{
-		"attributes": []any{
-			map[string]any{
-				"action":  "delete",
-				"pattern": "telemetry.sdk.*",
+	c := confmap.NewFromStringMap(map[string]any{})
+	if t.name == "jmxResource" {
+		c = confmap.NewFromStringMap(map[string]any{
+			"attributes": []any{
+				map[string]any{
+					"key":            "ClusterName",
+					"from_attribute": "k8s.cluster.name",
+					"action":         "insert",
+				},
+				map[string]any{
+					"key":            "Namespace",
+					"from_attribute": "k8s.namespace.name",
+					"action":         "insert",
+				},
 			},
-			map[string]any{
-				"action": "delete",
-				"key":    "service.name",
-				"value":  "unknown_service:java",
+		})
+	} else {
+		c = confmap.NewFromStringMap(map[string]any{
+			"attributes": []any{
+				map[string]any{
+					"action":  "delete",
+					"pattern": "telemetry.sdk.*",
+				},
+				map[string]any{
+					"action": "delete",
+					"key":    "service.name",
+					"value":  "unknown_service:java",
+				},
 			},
-		},
-	})
+		})
+	}
 
 	if err := c.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal resource processor: %w", err)

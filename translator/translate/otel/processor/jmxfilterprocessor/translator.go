@@ -43,8 +43,9 @@ func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
 
 	includeMetricNames := []string{
 		"jvm.classes.loaded",
-		"jvm.memory.bytes.used",
-		"jvm.memory.pool.bytes.used",
+		"jvm.memory.heap.used",
+		"jvm.memory.nonheap.used",
+		"jvm.memory.pool.used",
 		"jvm.operating.system.total.swap.space.size",
 		"jvm.operating.system.system.cpu.load",
 		"jvm.operating.system.process.cpu.load",

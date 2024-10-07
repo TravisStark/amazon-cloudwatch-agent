@@ -6,13 +6,13 @@ metric_declarations:
   - dimensions:
       - - ClusterName
         - Namespace
-    metric_name_selectors:
+    metric_name_selectors: #Recheck these !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       - java_lang_operatingsystem_freeswapspacesize
       - java_lang_operatingsystem_availableprocessors
       - catalina_manager_rejectedsessions
       - catalina_globalrequestprocessor_bytesreceived
       - catalina_globalrequestprocessor_processingtime
-      - keep_keys(attributesjvm_memory_pool_bytes_used
+      - jvm_memory_pool_bytes_used
       - java_lang_operatingsystem_systemcpuload
       - java_lang_operatingsystem_totalphysicalmemorysize
       - java_lang_operatingsystem_freephysicalmemorysize
