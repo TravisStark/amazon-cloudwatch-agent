@@ -5,6 +5,7 @@ package containerinsightsjmx
 
 import (
 	"fmt"
+	awsemfjmx "github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/awsemf/jmx"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/debug"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxfilterprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxtransformprocessor"
@@ -66,7 +67,7 @@ func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators
 	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(pipelineName))
 	translators.Processors.Set(metricstransformprocessorjmx.NewTranslatorWithName(pipelineName))
 	translators.Exporters.Set(debug.NewTranslator())
-	//translators.Exporters.Set(awsemfjmx.NewTranslatorWithName(common.JmxKey))
+	translators.Exporters.Set(awsemfjmx.NewTranslatorWithName(common.JmxKey))
 
 	return &translators, nil
 

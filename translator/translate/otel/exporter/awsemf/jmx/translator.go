@@ -26,17 +26,9 @@ import (
 //go:embed awsemfjmx_config.yaml
 var defaultKubernetesConfig string
 
-const (
-	metricNamespace               = "namespace"
-	k8sDefaultCloudWatchNamespace = "ContainerInsights/Prometheus"
-	ec2DefaultCloudWatchNamespace = "CWAgent/Prometheus"
-	metricDeclartion              = "metric_declaration"
-)
-
 var (
-	kubernetesBasePathKey = common.ConfigKey(common.LogsKey, common.MetricsCollectedKey, common.KubernetesKey)
-	endpointOverrideKey   = common.ConfigKey(common.LogsKey, common.EndpointOverrideKey)
-	roleARNPathKey        = common.ConfigKey(common.LogsKey, common.CredentialsKey, common.RoleARNKey)
+	endpointOverrideKey = common.ConfigKey(common.LogsKey, common.EndpointOverrideKey)
+	roleARNPathKey      = common.ConfigKey(common.LogsKey, common.CredentialsKey, common.RoleARNKey)
 )
 
 type translator struct {
@@ -64,9 +56,8 @@ func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
 	cfg.MiddlewareID = &agenthealth.LogsID
 
 	var defaultConfig string
-	if isKubernetes(conf) {
-		defaultConfig = defaultKubernetesConfig
-	}
+	defaultConfig = defaultKubernetesConfig
+
 	if defaultConfig != "" {
 		var rawConf map[string]interface{}
 		if err := yaml.Unmarshal([]byte(defaultConfig), &rawConf); err != nil {
@@ -97,88 +88,5 @@ func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
 		cfg.AWSSessionSettings.LocalMode = true
 	}
 
-	if isKubernetes(conf) {
-		if err := setKubernetesFields(conf, cfg); err != nil {
-			return nil, err
-		}
-	}
-
 	return cfg, nil
 }
-
-func isKubernetes(conf *confmap.Conf) bool {
-	return conf.IsSet(kubernetesBasePathKey)
-}
-
-func setKubernetesFields(conf *confmap.Conf, cfg *awsemfexporter.Config) error {
-	err := setJmxNamespace(conf, cfg)
-	if err != nil {
-		return err
-	}
-	//err = setJmxMetricDeclarations(conf, cfg)
-	//if err != nil {
-	//	return err
-	//}
-	return nil
-}
-
-func setJmxNamespace(conf *confmap.Conf, cfg *awsemfexporter.Config) error {
-	if namespace, ok := common.GetString(conf, common.ConfigKey(kubernetesBasePathKey, metricNamespace)); ok {
-		cfg.Namespace = namespace
-		return nil
-	}
-
-	return fmt.Errorf("failed to set JMX namespace: namespace not found in configuration")
-}
-
-//func setJmxMetricDeclarations(conf *confmap.Conf, cfg *awsemfexporter.Config) error {
-//	metricDeclarationKey := common.ConfigKey(kubernetesBasePathKey)
-//
-//	metricDeclarations := conf.Get(metricDeclarationKey)
-//
-//	if metricDeclarations == nil {
-//		return fmt.Errorf("metric declarations cannot be nil")
-//	}
-//
-//	mdList := metricDeclarations.([]map[string]interface{})
-//
-//	var declarations []*awsemfexporter.MetricDeclaration
-//
-//	for _, md := range mdList {
-//		declaration := &awsemfexporter.MetricDeclaration{}
-//
-//		// Handle dimensions
-//		if dimensions, ok := md["dimensions"]; ok {
-//			if dimList, ok := dimensions.([]interface{}); ok {
-//				var parsedDimensions [][]string
-//				for _, dim := range dimList {
-//					dimSlice := dim.([]string)
-//					var dimStrings []string
-//					for _, d := range dimSlice {
-//						dimStrings = append(dimStrings, d)
-//
-//					}
-//					parsedDimensions = append(parsedDimensions, dimStrings)
-//
-//				}
-//				declaration.Dimensions = parsedDimensions
-//			} else {
-//				return fmt.Errorf("invalid dimensions format")
-//			}
-//		}
-//
-//		if metricSelectors, ok := md["metric_name_selectors"]; ok {
-//			if metricSelectorsList, ok := metricSelectors.([]string); ok {
-//				declaration.MetricNameSelectors = metricSelectorsList
-//			} else {
-//				return fmt.Errorf("invalid metric selectors format")
-//			}
-//		} else {
-//			continue
-//		}
-//
-//		declarations = append(declarations, declaration)
-//	}
-//	cfg.MetricDeclarations = declarations
-//	return nil
-//}
