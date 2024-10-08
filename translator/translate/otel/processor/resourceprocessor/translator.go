@@ -19,6 +19,11 @@ type translator struct {
 	factory processor.Factory
 }
 
+var (
+	baseKey = common.ConfigKey(common.LogsKey, common.MetricsCollectedKey)
+	eksKey  = common.ConfigKey(baseKey, common.KubernetesKey)
+)
+
 type Option func(any)
 
 func WithName(name string) Option {
@@ -56,20 +61,52 @@ func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
 
 	c := confmap.NewFromStringMap(map[string]any{})
 	if t.name == "jmxResource" {
-		c = confmap.NewFromStringMap(map[string]any{
-			"attributes": []any{
-				map[string]any{
-					"key":            "ClusterName",
-					"from_attribute": "k8s.cluster.name",
-					"action":         "insert",
+		clusterName, ok := common.GetString(conf, common.ConfigKey(eksKey, "cluster_name"))
+
+		if ok {
+			c = confmap.NewFromStringMap(map[string]any{
+				//from config
+				"attributes": []any{
+					map[string]any{
+						"key":            "Namespace",
+						"from_attribute": "k8s.namespace.name",
+						"action":         "insert",
+					},
+					map[string]any{
+						"key":    "ClusterName",
+						"value":  clusterName,
+						"action": "upsert",
+					},
+					map[string]any{
+						"key":            "NodeName",
+						"from_attribute": "host.name",
+						"action":         "insert",
+					},
 				},
-				map[string]any{
-					"key":            "Namespace",
-					"from_attribute": "k8s.namespace.name",
-					"action":         "insert",
+			})
+		} else {
+			c = confmap.NewFromStringMap(map[string]any{
+				//from resource detection processor
+				"attributes": []any{
+					map[string]any{
+						"key":            "ClusterName",
+						"from_attribute": "k8s.cluster.name",
+						"action":         "insert",
+					},
+					map[string]any{
+						"key":            "Namespace",
+						"from_attribute": "k8s.namespace.name",
+						"action":         "insert",
+					},
+					map[string]any{
+						"key":            "NodeName",
+						"from_attribute": "host.name",
+						"action":         "insert",
+					},
 				},
-			},
-		})
+			})
+		}
+
 	} else {
 		c = confmap.NewFromStringMap(map[string]any{
 			"attributes": []any{

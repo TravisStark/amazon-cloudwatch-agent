@@ -6,6 +6,7 @@ package otel
 import (
 	"errors"
 	"fmt"
+	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/pipeline/containerinsightsjmx"
 	"log"
 	"time"
 
@@ -17,8 +18,6 @@ import (
 	"go.opentelemetry.io/collector/service/telemetry"
 	"go.uber.org/multierr"
 	"go.uber.org/zap/zapcore"
-
-	containerinsightsjmx "github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/pipeline/containerinsights/jmx"
 
 	"github.com/aws/amazon-cloudwatch-agent/translator/context"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/common"

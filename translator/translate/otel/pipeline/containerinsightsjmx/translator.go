@@ -63,10 +63,8 @@ func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators
 	}
 
 	translators.Receivers.Set(otlp.NewTranslatorWithName(common.JmxKey))
-	translators.Processors.Set(jmxfilterprocessor.NewTranslatorWithName(pipelineName)) //Filter metrics
-	if !conf.IsSet(common.ConfigKey(eksKey, clusterName)) {                            //only need the cluster name if not set
-		translators.Processors.Set(resourcedetectionjmx.NewTranslator()) //Adds k8s cluster name
-	}
+	translators.Processors.Set(jmxfilterprocessor.NewTranslatorWithName(pipelineName))                     //Filter metrics
+	translators.Processors.Set(resourcedetectionjmx.NewTranslator())                                       //Adds k8s cluster/nodename name
 	translators.Processors.Set(resourceprocessor.NewTranslator(resourceprocessor.WithName("jmxResource"))) //Change resource attribute names
 	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(pipelineName))                  //Removes attributes that are not of [ClusterName, Namespace]
 	translators.Processors.Set(metricstransformprocessorjmx.NewTranslatorWithName(pipelineName))           //Renames metrics and adds pool and area dimensions
