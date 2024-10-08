@@ -33,14 +33,6 @@ func (o optionFunc) apply(t *translator) {
 	o(t)
 }
 
-// WithDataType determines where the translator should look to find
-// the configuration.
-func WithDataType(dataType component.DataType) Option {
-	return optionFunc(func(t *translator) {
-		t.dataType = dataType
-	})
-}
-
 var _ common.Translator[component.Config] = (*translator)(nil)
 
 func NewTranslator(opts ...Option) common.Translator[component.Config] {
@@ -57,7 +49,7 @@ func (t *translator) ID() component.ID {
 
 func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
 	if conf == nil || !conf.IsSet(common.JmxConfigKey) {
-		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: common.JmxConfigKey}
+		return nil, &common.MissingKeyError{JsonKey: common.JmxConfigKey}
 	}
 
 	cfg := t.factory.CreateDefaultConfig().(*attributesprocessor.Config)
