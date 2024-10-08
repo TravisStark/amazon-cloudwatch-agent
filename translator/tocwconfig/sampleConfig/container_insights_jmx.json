@@ -1,7 +1,6 @@
 {
   "agent": {
-    "region": "us-west-2",
-    "debug": true
+    "region": "us-west-2"
   },
   "logs": {
     "metrics_collected": {

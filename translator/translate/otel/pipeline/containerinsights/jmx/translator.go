@@ -5,8 +5,9 @@ package containerinsightsjmx
 
 import (
 	"fmt"
-	awsemfjmx "github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/awsemf/jmx"
+	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/awsemf"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/exporter/debug"
+	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/cumulativetodeltaprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxfilterprocessor"
 	"github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/jmxtransformprocessor"
 	metricstransformprocessorjmx "github.com/aws/amazon-cloudwatch-agent/translator/translate/otel/processor/metrictransformprocessorjmx"
@@ -28,7 +29,7 @@ const (
 var (
 	baseKey = common.ConfigKey(common.LogsKey, common.MetricsCollectedKey)
 	eksKey  = common.ConfigKey(baseKey, common.KubernetesKey)
-	ecsKey  = common.ConfigKey(baseKey, common.ECSKey)
+	jmxKey  = common.ConfigKey(eksKey, "jmx_container_insights")
 )
 
 type translator struct {
@@ -47,8 +48,11 @@ func (t *translator) ID() component.ID {
 // Translate creates a pipeline for container insights if the logs.metrics_collected.ecs or logs.metrics_collected.kubernetes
 // section is present.
 func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators, error) {
-	if conf == nil || (!conf.IsSet(ecsKey) && !conf.IsSet(eksKey)) {
-		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: fmt.Sprint(ecsKey, " or ", eksKey)}
+	if conf == nil || (!conf.IsSet(jmxKey)) {
+		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: fmt.Sprint(jmxKey)}
+	}
+	if val, _ := common.GetBool(conf, jmxKey); !val {
+		return nil, nil
 	}
 
 	translators := common.ComponentTranslators{
@@ -63,11 +67,12 @@ func (t *translator) Translate(conf *confmap.Conf) (*common.ComponentTranslators
 	if !conf.IsSet(common.ConfigKey(eksKey, clusterName)) {                            //only need the cluster name if not set
 		translators.Processors.Set(resourcedetectionjmx.NewTranslator()) //Adds k8s cluster name
 	}
-	translators.Processors.Set(resourceprocessor.NewTranslator(resourceprocessor.WithName("jmxResource"))) //change resource attribute names
-	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(pipelineName))
-	translators.Processors.Set(metricstransformprocessorjmx.NewTranslatorWithName(pipelineName))
-	translators.Exporters.Set(debug.NewTranslator())
-	translators.Exporters.Set(awsemfjmx.NewTranslatorWithName(common.JmxKey))
+	translators.Processors.Set(resourceprocessor.NewTranslator(resourceprocessor.WithName("jmxResource"))) //Change resource attribute names
+	translators.Processors.Set(jmxtransformprocessor.NewTranslatorWithName(pipelineName))                  //Removes attributes that are not of [ClusterName, Namespace]
+	translators.Processors.Set(metricstransformprocessorjmx.NewTranslatorWithName(pipelineName))           //Renames metrics and adds pool and area dimensions
+	translators.Processors.Set(cumulativetodeltaprocessor.NewTranslator(common.WithName(pipelineName), cumulativetodeltaprocessor.WithConfigKeys(jmxKey)))
+	translators.Exporters.Set(debug.NewTranslator())                      //Provides debug info for metrics
+	translators.Exporters.Set(awsemf.NewTranslatorWithName(pipelineName)) //Sends metrics to cloudwatch console (also adds resource attributes to metrics)
 
 	return &translators, nil
 

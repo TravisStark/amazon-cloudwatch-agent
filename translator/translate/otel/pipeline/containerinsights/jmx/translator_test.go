@@ -33,23 +33,7 @@ func TestTranslator(t *testing.T) {
 	}{
 		"WithoutECSOrKubernetesKey": {
 			input:   map[string]interface{}{},
-			wantErr: &common.MissingKeyError{ID: cit.ID(), JsonKey: fmt.Sprint(ecsKey, " or ", eksKey)},
-		},
-		"WithECSKey": {
-			input: map[string]interface{}{
-				"logs": map[string]interface{}{
-					"metrics_collected": map[string]interface{}{
-						"ecs": nil,
-					},
-				},
-			},
-			want: &want{
-				pipelineType: "metrics/containerinsightsjmx",
-				receivers:    []string{"otlp/jmx"},
-				processors:   []string{"filter/jmx", "transform/jmx"},
-				exporters:    []string{"awsemfj/jmx"},
-				extensions:   []string{},
-			},
+			wantErr: &common.MissingKeyError{ID: cit.ID(), JsonKey: fmt.Sprint(eksKey)},
 		},
 		"WithKubernetesKey": {
 			input: map[string]interface{}{
@@ -62,8 +46,8 @@ func TestTranslator(t *testing.T) {
 			want: &want{
 				pipelineType: "metrics/containerinsightsjmx",
 				receivers:    []string{"otlp/jmx"},
-				processors:   []string{"filter/jmx", "transform/jmx"},
-				exporters:    []string{"awsemf/jmx"},
+				processors:   []string{"filter/containerinsightsjmx", "resourcedetection", "resource/jmxResource", "transform/containerinsightsjmx", "metricstransform/containerinsightsjmx"},
+				exporters:    []string{"debug", "awsemf/jmx"},
 				extensions:   []string{},
 			},
 		},
