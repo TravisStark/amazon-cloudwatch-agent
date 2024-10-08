@@ -39,7 +39,7 @@ func (t *translator) ID() component.ID {
 
 func (t *translator) Translate(conf *confmap.Conf) (component.Config, error) {
 	if !(conf != nil && conf.IsSet(common.ContainerInsightsConfigKey)) {
-		return nil, nil //returning nil for now !!!!!!!
+		return nil, &common.MissingKeyError{ID: t.ID(), JsonKey: common.ContainerInsightsConfigKey}
 	}
 	cfg := t.factory.CreateDefaultConfig().(*transformprocessor.Config)
 	clusterName := conf.Get(common.ConfigKey(common.ContainerInsightsConfigKey, "cluster_name"))
