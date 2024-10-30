@@ -24,11 +24,54 @@ var (
 
 type flagStats struct {
 	*intervalStats
+	describeTagsStatusCounts [2]int
 
 	flagSet agent.FlagSet
 }
 
+// StatusCounters holds counters for success and failure
+type StatusCounters struct {
+	Counters [2]int
+}
+
+var (
+	describeTagsCounters StatusCounters
+	counterMutex         sync.Mutex
+)
+
+// resetDescribeTagsCounter resets the global counters every 5 minutes
+func resetDescribeTagsCounter() {
+	for {
+		time.Sleep(5 * time.Minute)
+		counterMutex.Lock()
+		describeTagsCounters = StatusCounters{}
+		counterMutex.Unlock()
+	}
+}
+
+// IncrementDescribeTagsCounter increments the counter for DescribeTags API calls
+// based on whether the call was a success or failure
+func IncrementDescribeTagsCounter(isSuccess bool) {
+	counterMutex.Lock()
+	defer counterMutex.Unlock()
+
+	if isSuccess {
+		describeTagsCounters.Counters[0]++
+	} else {
+		describeTagsCounters.Counters[1]++
+	}
+}
+
+// GetDescribeTagsCounters retrieves the current values of the counters
+func GetDescribeTagsCounters() [2]int {
+	counterMutex.Lock()
+	defer counterMutex.Unlock()
+	return describeTagsCounters.Counters
+}
+
+// Update the flagStats with current counter values
 func (p *flagStats) update() {
+	counters := GetDescribeTagsCounters()
 	p.stats.Store(agent.Stats{
 		ImdsFallbackSucceed:       boolToSparseInt(p.flagSet.IsSet(agent.FlagIMDSFallbackSuccess)),
 		SharedConfigFallback:      boolToSparseInt(p.flagSet.IsSet(agent.FlagSharedConfigFallback)),
@@ -37,6 +80,7 @@ func (p *flagStats) update() {
 		RunningInContainer:        boolToInt(p.flagSet.IsSet(agent.FlagRunningInContainer)),
 		Mode:                      p.flagSet.GetString(agent.FlagMode),
 		RegionType:                p.flagSet.GetString(agent.FlagRegionType),
+		DescribeTagsApiCounts:     counters,
 	})
 }
 
@@ -72,6 +116,7 @@ func newFlagStats(flagSet agent.FlagSet, interval time.Duration) *flagStats {
 func GetFlagsStats() agent.StatsProvider {
 	flagOnce.Do(func() {
 		flagSingleton = newFlagStats(agent.UsageFlags(), flagGetInterval)
+		go resetDescribeTagsCounter()
 	})
 	return flagSingleton
 }

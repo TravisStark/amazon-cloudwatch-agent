@@ -5,6 +5,7 @@ package stats
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -58,23 +59,39 @@ func (sh *statsHandler) Position() awsmiddleware.HandlerPosition {
 
 func (sh *statsHandler) HandleRequest(ctx context.Context, r *http.Request) {
 	operation := awsmiddleware.GetOperationName(ctx)
+	sh.logger.Info("Received request", zap.String("operation", operation))
+
 	if !sh.filter.IsAllowed(operation) {
+		sh.logger.Warn("Operation not allowed", zap.String("operation", operation))
 		return
 	}
+
+	// Generate the header for the request
 	header := sh.Header(operation)
 	if header != "" {
 		r.Header.Set(headerKeyAgentStats, header)
+		sh.logger.Debug("Header set in request", zap.String("operation", operation), zap.String("header", header))
+	} else {
+		sh.logger.Warn("Header is empty for operation", zap.String("operation", operation))
 	}
+
+	// Log the complete request header after setting
+	sh.logger.Info("Request headers after setting agent stats", zap.Any("request_headers", r.Header))
 }
 
 func (sh *statsHandler) Header(operation string) string {
 	stats := &agent.Stats{}
 	for _, p := range sh.providers {
+		sh.logger.Debug("Merging stats from provider", zap.String("operation", operation), zap.String("provider", fmt.Sprintf("%+v", p)))
 		stats.Merge(p.Stats(operation))
 	}
+
 	header, err := stats.Marshal()
 	if err != nil {
 		sh.logger.Warn("Failed to serialize agent stats", zap.Error(err))
+		return ""
 	}
+
+	sh.logger.Debug("Serialized agent stats header", zap.String("header", header))
 	return header
 }

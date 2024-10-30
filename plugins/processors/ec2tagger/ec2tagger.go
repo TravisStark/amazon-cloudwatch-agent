@@ -5,6 +5,7 @@ package ec2tagger
 
 import (
 	"context"
+	"github.com/aws/amazon-cloudwatch-agent/extension/agenthealth/handler/stats/provider"
 	"hash/fnv"
 	"os"
 	"sync"
@@ -159,6 +160,8 @@ func (t *Tagger) updateOtelAttributes(attributes []pcommon.Map) {
 }
 
 // updateTags calls EC2 Describe Tags and replaces the Tagger's tagCache with the newly retrieved values
+// updateTags calls EC2 Describe Tags and replaces the Tagger's tagCache with the newly retrieved values
+// updateTags calls EC2 Describe Tags and replaces the Tagger's tagCache with the newly retrieved values
 func (t *Tagger) updateTags() error {
 	tags := make(map[string]string)
 	input := &ec2.DescribeTagsInput{
@@ -167,14 +170,19 @@ func (t *Tagger) updateTags() error {
 
 	for {
 		result, err := t.ec2API.DescribeTags(input)
+
+		isSuccess := err == nil
+
+		provider.IncrementDescribeTagsCounter(isSuccess)
+
 		if err != nil {
 			return err
 		}
+
 		for _, tag := range result.Tags {
 			key := *tag.Key
 			if ec2InstanceTagKeyASG == key {
-				// rename to match CW dimension as applied by AutoScaling service, not the EC2 tag
-				key = cwDimensionASG
+				key = cwDimensionASG // Rename for CW dimension
 			}
 			tags[key] = *tag.Value
 		}
@@ -183,6 +191,7 @@ func (t *Tagger) updateTags() error {
 		}
 		input.SetNextToken(*result.NextToken)
 	}
+
 	t.Lock()
 	defer t.Unlock()
 	t.ec2TagCache = tags

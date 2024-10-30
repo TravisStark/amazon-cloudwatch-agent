@@ -33,13 +33,14 @@ func newMockStatsProvider(stats *agent.Stats) agent.StatsProvider {
 
 func TestStatsHandler(t *testing.T) {
 	stats := &agent.Stats{
-		FileDescriptorCount:  aws.Int32(456),
-		ThreadCount:          aws.Int32(789),
-		LatencyMillis:        aws.Int64(1234),
-		PayloadBytes:         aws.Int(5678),
-		StatusCode:           aws.Int(200),
-		ImdsFallbackSucceed:  aws.Int(1),
-		SharedConfigFallback: aws.Int(1),
+		FileDescriptorCount:   aws.Int32(456),
+		ThreadCount:           aws.Int32(789),
+		LatencyMillis:         aws.Int64(1234),
+		PayloadBytes:          aws.Int(5678),
+		StatusCode:            aws.Int(200),
+		ImdsFallbackSucceed:   aws.Int(1),
+		SharedConfigFallback:  aws.Int(1),
+		DescribeTagsApiCounts: [2]int{5, 2}, // Add DescribeTagsApiCounts here
 	}
 	handler := newStatsHandler(
 		zap.NewNop(),
@@ -59,11 +60,11 @@ func TestStatsHandler(t *testing.T) {
 	assert.Equal(t, "", req.Header.Get(headerKeyAgentStats))
 	handler.filter = agent.NewOperationsFilter(agent.AllowAllOperations)
 	handler.HandleRequest(ctx, req)
-	assert.Equal(t, `"cpu":1.2,"mem":123,"fd":456,"th":789,"lat":1234,"load":5678,"code":200,"scfb":1,"ifs":1`, req.Header.Get(headerKeyAgentStats))
+	assert.Equal(t, `"cpu":1.2,"mem":123,"fd":456,"th":789,"lat":1234,"load":5678,"code":200,"scfb":1,"ifs":1,"des":[5,2]`, req.Header.Get(headerKeyAgentStats))
 	stats.StatusCode = aws.Int(404)
 	stats.LatencyMillis = nil
 	handler.HandleRequest(ctx, req)
-	assert.Equal(t, `"cpu":1.2,"mem":123,"fd":456,"th":789,"load":5678,"code":404,"scfb":1,"ifs":1`, req.Header.Get(headerKeyAgentStats))
+	assert.Equal(t, `"cpu":1.2,"mem":123,"fd":456,"th":789,"load":5678,"code":404,"scfb":1,"ifs":1,"des":[5,2]`, req.Header.Get(headerKeyAgentStats))
 }
 
 func TestNewHandlers(t *testing.T) {
