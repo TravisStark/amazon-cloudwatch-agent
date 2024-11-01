@@ -4,14 +4,13 @@
 package provider
 
 import (
-	"fmt"
+	"log"
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/aws/amazon-cloudwatch-agent/cfg/envconfig"
 	"github.com/aws/amazon-cloudwatch-agent/extension/agenthealth/handler/stats/agent"
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 const (
@@ -26,8 +25,7 @@ var (
 type flagStats struct {
 	*intervalStats
 	describeTagsStatusCounts [2]int
-
-	flagSet agent.FlagSet
+	flagSet                  agent.FlagSet
 }
 
 // StatusCounters holds counters for success and failure
@@ -42,10 +40,12 @@ var (
 
 // resetDescribeTagsCounter resets the global counters every 5 minutes
 func resetDescribeTagsCounter() {
+	log.Println("Starting resetDescribeTagsCounter loop")
 	for {
 		time.Sleep(5 * time.Minute)
 		counterMutex.Lock()
 		describeTagsCounters = StatusCounters{}
+		log.Println("Reset describeTagsCounters to:", describeTagsCounters)
 		counterMutex.Unlock()
 	}
 }
@@ -58,24 +58,25 @@ func IncrementDescribeTagsCounter(isSuccess bool) {
 
 	if isSuccess {
 		describeTagsCounters.Counters[0]++
+		log.Printf("Incremented success counter: %d", describeTagsCounters.Counters[0])
 	} else {
 		describeTagsCounters.Counters[1]++
+		log.Printf("Incremented failure counter: %d", describeTagsCounters.Counters[1])
 	}
-	fmt.Println(describeTagsCounters.Counters[0])
-	fmt.Println(describeTagsCounters.Counters[1])
-	fmt.Println("Above are the counters")
-
+	log.Println("Current counters:", describeTagsCounters.Counters)
 }
 
 // GetDescribeTagsCounters retrieves the current values of the counters
 func GetDescribeTagsCounters() [2]int {
 	counterMutex.Lock()
 	defer counterMutex.Unlock()
+	log.Println("Retrieved describeTagsCounters:", describeTagsCounters.Counters)
 	return describeTagsCounters.Counters
 }
 
 // Update the flagStats with current counter values
 func (p *flagStats) update() {
+	log.Println("Updating flagStats with current counters")
 	counters := GetDescribeTagsCounters()
 	p.stats.Store(agent.Stats{
 		ImdsFallbackSucceed:       boolToSparseInt(p.flagSet.IsSet(agent.FlagIMDSFallbackSuccess)),
@@ -87,9 +88,11 @@ func (p *flagStats) update() {
 		RegionType:                p.flagSet.GetString(agent.FlagRegionType),
 		DescribeTagsApiCounts:     counters,
 	})
+	log.Printf("Updated flagStats: %+v", p.stats.Load())
 }
 
 func boolToInt(value bool) *int {
+	log.Printf("Converting bool to int: %v", value)
 	result := boolToSparseInt(value)
 	if result != nil {
 		return result
@@ -99,20 +102,25 @@ func boolToInt(value bool) *int {
 
 func boolToSparseInt(value bool) *int {
 	if value {
+		log.Println("Converting bool to sparse int: true")
 		return aws.Int(1)
 	}
+	log.Println("Converting bool to sparse int: false")
 	return nil
 }
 
 func newFlagStats(flagSet agent.FlagSet, interval time.Duration) *flagStats {
+	log.Println("Creating new flagStats")
 	stats := &flagStats{
 		flagSet:       flagSet,
 		intervalStats: newIntervalStats(interval),
 	}
 	stats.flagSet.OnChange(stats.update)
 	if envconfig.IsRunningInContainer() {
+		log.Println("Running in container, setting flagRunningInContainer")
 		stats.flagSet.Set(agent.FlagRunningInContainer)
 	} else {
+		log.Println("Not running in container, updating stats")
 		stats.update()
 	}
 	return stats
@@ -120,6 +128,7 @@ func newFlagStats(flagSet agent.FlagSet, interval time.Duration) *flagStats {
 
 func GetFlagsStats() agent.StatsProvider {
 	flagOnce.Do(func() {
+		log.Println("Initializing flagSingleton with newFlagStats")
 		flagSingleton = newFlagStats(agent.UsageFlags(), flagGetInterval)
 		go resetDescribeTagsCounter()
 	})
