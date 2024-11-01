@@ -5,6 +5,7 @@ package ec2tagger
 
 import (
 	"context"
+	"fmt"
 	"github.com/aws/amazon-cloudwatch-agent/extension/agenthealth/handler/stats/provider"
 	"hash/fnv"
 	"os"
@@ -163,6 +164,9 @@ func (t *Tagger) updateOtelAttributes(attributes []pcommon.Map) {
 // updateTags calls EC2 Describe Tags and replaces the Tagger's tagCache with the newly retrieved values
 // updateTags calls EC2 Describe Tags and replaces the Tagger's tagCache with the newly retrieved values
 func (t *Tagger) updateTags() error {
+	fmt.Println("update tags is called")
+	t.logger.Info("We in update tags lets goooooooooooooooo")
+
 	tags := make(map[string]string)
 	input := &ec2.DescribeTagsInput{
 		Filters: t.tagFilters,
@@ -172,6 +176,17 @@ func (t *Tagger) updateTags() error {
 		result, err := t.ec2API.DescribeTags(input)
 
 		isSuccess := err == nil
+		fmt.Println("incrementing counter for describe tags")
+		t.logger.Info("We above increment lets goooooooooooooooo")
+
+		if isSuccess {
+			fmt.Println("It's true!")
+			t.logger.Info("It's true")
+
+		} else {
+			fmt.Println("It's false!")
+			t.logger.Info("It's false")
+		}
 
 		provider.IncrementDescribeTagsCounter(isSuccess)
 
@@ -231,10 +246,8 @@ func (t *Tagger) refreshLoop(refreshInterval time.Duration, stopAfterFirstSucces
 				}
 			}
 
-			if refreshTags {
-				if err := t.updateTags(); err != nil {
-					t.logger.Warn("ec2tagger: Error refreshing EC2 tags, keeping old values", zap.Error(err))
-				}
+			if err := t.updateTags(); err != nil {
+				t.logger.Warn("ec2tagger: Error refreshing EC2 tags, keeping old values", zap.Error(err))
 			}
 
 			if refreshVolumes {
@@ -469,12 +482,10 @@ func (t *Tagger) initialRetrievalOfTagsAndVolumes() {
 			t.logger.Info("ec2tagger: initial retrieval of tags and volumes", zap.Int("retry", retry))
 		}
 
-		if !tagsRetrieved {
-			if err := t.updateTags(); err != nil {
-				t.logger.Warn("ec2tagger: Unable to describe ec2 tags for initial retrieval", zap.Error(err))
-			} else {
-				tagsRetrieved = true
-			}
+		if err := t.updateTags(); err != nil {
+			t.logger.Warn("ec2tagger: Unable to describe ec2 tags for initial retrieval", zap.Error(err))
+		} else {
+			tagsRetrieved = true
 		}
 
 		if !volsRetrieved {

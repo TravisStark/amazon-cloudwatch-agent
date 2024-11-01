@@ -4,6 +4,7 @@
 package provider
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -60,6 +61,10 @@ func IncrementDescribeTagsCounter(isSuccess bool) {
 	} else {
 		describeTagsCounters.Counters[1]++
 	}
+	fmt.Println(describeTagsCounters.Counters[0])
+	fmt.Println(describeTagsCounters.Counters[1])
+	fmt.Println("Above are the counters")
+
 }
 
 // GetDescribeTagsCounters retrieves the current values of the counters

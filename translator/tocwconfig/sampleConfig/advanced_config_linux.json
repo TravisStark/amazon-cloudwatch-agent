@@ -1,48 +1,46 @@
 {
-  "agent":{
-    "debug":true
+  "agent": {
+    "debug": true,
+    "aws_sdk_log_level": "LogDebugWithHTTPBody"
   },
-  "logs":{
-    "force_flush_interval":5,
-    "metrics_collected":{
-      "emf_processor":{
-        "metric_declaration":[
+  "metrics": {
+    "metrics_collected": {
+      "cpu": {
+        "resources": [
+          "*"
+        ],
+        "drop_original_metrics": [
+          "cpu_usage_idle",
+          "time_active"
+        ],
+        "measurement": [
           {
-            "dimensions":[
-              [
-                "ClusterName",
-                "TaskGroup"
-              ]
-            ],
-            "label_matcher":"smtp",
-            "metric_selectors":[
-              "postfix_cleanup_messages_not_accepted_total",
-              "postfix_cleanup_messages_processed_total",
-              "postfix_cleanup_messages_rejected_total",
-              "promhttp_metric_handler_requests_in_flight",
-              "promhttp_metric_handler_requests_total"
-            ],
-            "source_labels":[
-              "container_name"
-            ]
-          }
-        ]
-      },
-      "prometheus":{
-        "ecs_service_discovery":{
-          "sd_frequency":"1m",
-          "sd_result_file":"/tmp/cwagent_ecs_auto_sd.yaml",
-          "task_definition_list":[
-            {
-              "sd_job_name":"smtp-exporter",
-              "sd_metrics_path":"/metrics",
-              "sd_metrics_ports":"9154",
-              "sd_task_definition_arn_pattern":".*:task-definition/shared-prod-smtp:[0-9]+"
-            }
-          ]
-        },
-        "prometheus_config_path":"env:PROMETHEUS_CONFIG_CONTENT"
+            "name": "cpu_usage_idle",
+            "rename": "CPU_USAGE_IDLE",
+            "unit": "unit"
+          },
+          {
+            "name": "cpu_usage_nice",
+            "unit": "unit"
+          },
+          "cpu_usage_guest",
+          "time_active",
+          "usage_active"
+        ],
+        "totalcpu": false,
+        "metrics_collection_interval": 10,
+        "append_dimensions": {
+          "d1": "foo",
+          "d2": "bar"
+        }
       }
+    },
+
+    "append_dimensions": {
+      "ImageId": "${aws:ImageId}",
+      "InstanceId": "${aws:InstanceId}",
+      "InstanceType": "${aws:InstanceType}",
+      "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
     }
   }
 }
