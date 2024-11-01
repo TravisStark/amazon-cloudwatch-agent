@@ -29,7 +29,7 @@ type Stats struct {
 	RunningInContainer        *int     `json:"ric,omitempty"`
 	RegionType                *string  `json:"rt,omitempty"`
 	Mode                      *string  `json:"m,omitempty"`
-	DescribeTagsApiCounts     [2]int   `json:"des,omitempty"`
+	DescribeTagsApiCounts     []int    `json:"des,omitempty"`
 }
 
 // Merge the other Stats into the current. If the field is not nil,

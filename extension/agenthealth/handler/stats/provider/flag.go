@@ -24,17 +24,17 @@ var (
 
 type flagStats struct {
 	*intervalStats
-	describeTagsStatusCounts [2]int
+	describeTagsStatusCounts []int // Changed to a slice
 	flagSet                  agent.FlagSet
 }
 
 // StatusCounters holds counters for success and failure
 type StatusCounters struct {
-	Counters [2]int
+	Counters []int // Changed to a slice
 }
 
 var (
-	describeTagsCounters StatusCounters
+	describeTagsCounters = StatusCounters{Counters: make([]int, 2)} // Initialize with a slice
 	counterMutex         sync.Mutex
 )
 
@@ -44,8 +44,8 @@ func resetDescribeTagsCounter() {
 	for {
 		time.Sleep(5 * time.Minute)
 		counterMutex.Lock()
-		describeTagsCounters = StatusCounters{}
-		log.Println("Reset describeTagsCounters to:", describeTagsCounters)
+		describeTagsCounters.Counters = make([]int, 2) // Reset using a new slice
+		log.Println("Reset describeTagsCounters to:", describeTagsCounters.Counters)
 		counterMutex.Unlock()
 	}
 }
@@ -67,7 +67,7 @@ func IncrementDescribeTagsCounter(isSuccess bool) {
 }
 
 // GetDescribeTagsCounters retrieves the current values of the counters
-func GetDescribeTagsCounters() [2]int {
+func GetDescribeTagsCounters() []int {
 	counterMutex.Lock()
 	defer counterMutex.Unlock()
 	log.Println("Retrieved describeTagsCounters:", describeTagsCounters.Counters)

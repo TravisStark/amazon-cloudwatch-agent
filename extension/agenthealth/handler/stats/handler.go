@@ -66,7 +66,6 @@ func (sh *statsHandler) HandleRequest(ctx context.Context, r *http.Request) {
 		return
 	}
 
-	// Generate the header for the request
 	header := sh.Header(operation)
 	if header != "" {
 		r.Header.Set(headerKeyAgentStats, header)
@@ -75,7 +74,6 @@ func (sh *statsHandler) HandleRequest(ctx context.Context, r *http.Request) {
 		sh.logger.Warn("Header is empty for operation", zap.String("operation", operation))
 	}
 
-	// Log the complete request header after setting
 	sh.logger.Info("Request headers after setting agent stats", zap.Any("request_headers", r.Header))
 }
 
