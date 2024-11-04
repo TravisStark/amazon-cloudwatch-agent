@@ -69,9 +69,12 @@ func IncrementDescribeTagsCounter(isSuccess bool) {
 // GetDescribeTagsCounters retrieves the current values of the counters
 func GetDescribeTagsCounters() []int {
 	counterMutex.Lock()
-	defer counterMutex.Unlock()
-	log.Println("Retrieved describeTagsCounters:", describeTagsCounters.Counters)
-	return describeTagsCounters.Counters
+	copyList := describeTagsCounters.Counters
+	counterMutex.Unlock()
+	log.Println("Retrieved describeTagsCounters:", copyList)
+
+	return copyList
+
 }
 
 // Update the flagStats with current counter values

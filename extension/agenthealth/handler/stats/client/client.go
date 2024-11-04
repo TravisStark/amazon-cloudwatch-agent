@@ -6,6 +6,7 @@ package client
 import (
 	"context"
 	"io"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -70,13 +71,21 @@ func (csh *clientStatsHandler) Position() awsmiddleware.HandlerPosition {
 
 func (csh *clientStatsHandler) HandleRequest(ctx context.Context, r *http.Request) {
 	operation := csh.getOperationName(ctx)
+	log.Printf("Handling request for operation: %s", operation)
+
 	if !csh.filter.IsAllowed(operation) {
+		log.Printf("Operation %s is not allowed by the filter, skipping request handling.", operation)
 		return
 	}
+
 	requestID := csh.getRequestID(ctx)
+	log.Printf("Generated request ID: %s", requestID)
+
 	recorder := &requestRecorder{start: time.Now()}
+
 	if r.ContentLength > 0 {
 		recorder.payloadBytes = r.ContentLength
+		log.Printf("Request content length: %d bytes", r.ContentLength)
 	} else if r.Body != nil {
 		rsc, ok := r.Body.(aws.ReaderSeekerCloser)
 		if !ok {
@@ -84,31 +93,49 @@ func (csh *clientStatsHandler) HandleRequest(ctx context.Context, r *http.Reques
 		}
 		if length, _ := aws.SeekerLen(rsc); length > 0 {
 			recorder.payloadBytes = length
+			log.Printf("Seeker length of request body: %d bytes", length)
 		} else if body, err := r.GetBody(); err == nil {
 			recorder.payloadBytes, _ = io.Copy(io.Discard, body)
+			log.Printf("Calculated body length by copying: %d bytes", recorder.payloadBytes)
 		}
 	}
+
+	log.Printf("Storing recorder in cache for request ID: %s", requestID)
 	csh.requestCache.Set(requestID, recorder, ttlcache.DefaultTTL)
 }
 
 func (csh *clientStatsHandler) HandleResponse(ctx context.Context, r *http.Response) {
 	operation := csh.getOperationName(ctx)
+	log.Printf("Handling response for operation: %s", operation)
+
 	if !csh.filter.IsAllowed(operation) {
+		log.Printf("Operation %s is not allowed by the filter, skipping response handling.", operation)
 		return
 	}
+
 	requestID := csh.getRequestID(ctx)
+	log.Printf("Retrieved request ID for response: %s", requestID)
+
 	item, ok := csh.requestCache.GetAndDelete(requestID)
 	if !ok {
+		log.Printf("No request recorder found in cache for request ID: %s", requestID)
 		return
 	}
+
 	recorder := item.Value()
 	stats := agent.Stats{
 		PayloadBytes: aws.Int(int(recorder.payloadBytes)),
 		StatusCode:   aws.Int(r.StatusCode),
 	}
+
 	latency := time.Since(recorder.start)
 	stats.LatencyMillis = aws.Int64(latency.Milliseconds())
+
+	log.Printf("Request stats for operation %s: PayloadBytes=%d, StatusCode=%d, LatencyMillis=%d",
+		operation, recorder.payloadBytes, r.StatusCode, stats.LatencyMillis)
+
 	csh.statsByOperation.Store(operation, stats)
+	log.Printf("Stored stats for operation: %s", operation)
 }
 
 func (csh *clientStatsHandler) Stats(operation string) agent.Stats {
