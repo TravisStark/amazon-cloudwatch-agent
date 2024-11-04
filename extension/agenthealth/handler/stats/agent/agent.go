@@ -5,6 +5,7 @@ package agent
 
 import (
 	"encoding/json"
+	"log"
 	"strings"
 
 	"github.com/aws/amazon-cloudwatch-agent/internal/util/collections"
@@ -15,21 +16,21 @@ const (
 )
 
 type Stats struct {
-	CpuPercent                *float64 `json:"cpu,omitempty"`
-	MemoryBytes               *uint64  `json:"mem,omitempty"`
-	FileDescriptorCount       *int32   `json:"fd,omitempty"`
-	ThreadCount               *int32   `json:"th,omitempty"`
-	LatencyMillis             *int64   `json:"lat,omitempty"`
-	PayloadBytes              *int     `json:"load,omitempty"`
-	StatusCode                *int     `json:"code,omitempty"`
-	SharedConfigFallback      *int     `json:"scfb,omitempty"`
-	ImdsFallbackSucceed       *int     `json:"ifs,omitempty"`
-	AppSignals                *int     `json:"as,omitempty"`
-	EnhancedContainerInsights *int     `json:"eci,omitempty"`
-	RunningInContainer        *int     `json:"ric,omitempty"`
-	RegionType                *string  `json:"rt,omitempty"`
-	Mode                      *string  `json:"m,omitempty"`
-	DescribeTagsApiCounts     []int    `json:"des,omitempty"`
+	CpuPercent                *float64         `json:"cpu,omitempty"`
+	MemoryBytes               *uint64          `json:"mem,omitempty"`
+	FileDescriptorCount       *int32           `json:"fd,omitempty"`
+	ThreadCount               *int32           `json:"th,omitempty"`
+	LatencyMillis             *int64           `json:"lat,omitempty"`
+	PayloadBytes              *int             `json:"load,omitempty"`
+	StatusCode                *int             `json:"code,omitempty"`
+	StatusCodesByAPI          map[string][]int `json:"status_codes_by_api,omitempty"`
+	SharedConfigFallback      *int             `json:"scfb,omitempty"`
+	ImdsFallbackSucceed       *int             `json:"ifs,omitempty"`
+	AppSignals                *int             `json:"as,omitempty"`
+	EnhancedContainerInsights *int             `json:"eci,omitempty"`
+	RunningInContainer        *int             `json:"ric,omitempty"`
+	RegionType                *string          `json:"rt,omitempty"`
+	Mode                      *string          `json:"m,omitempty"`
 }
 
 // Merge the other Stats into the current. If the field is not nil,
@@ -77,7 +78,27 @@ func (s *Stats) Merge(other Stats) {
 	if other.Mode != nil {
 		s.Mode = other.Mode
 	}
-	s.DescribeTagsApiCounts = other.DescribeTagsApiCounts
+	if other.StatusCodesByAPI != nil {
+		if s.StatusCodesByAPI == nil {
+			s.StatusCodesByAPI = make(map[string][]int)
+		}
+		for api, codes := range other.StatusCodesByAPI {
+			// Ensure the target slice is initialized if not present
+			if _, exists := s.StatusCodesByAPI[api]; !exists {
+				s.StatusCodesByAPI[api] = make([]int, len(codes)) // Initialize with the same length
+			}
+			// Ensure both slices are the same length before merging
+			if len(s.StatusCodesByAPI[api]) == len(codes) {
+				for i := range codes {
+					s.StatusCodesByAPI[api][i] += codes[i] // Sum the counts for each status code
+				}
+			} else {
+				// Optionally handle different lengths, such as logging an error or adjusting sizes
+				// For now, we can just log a warning
+				log.Printf("Warning: Status code arrays for API %s have different lengths. Skipping merge for this API.", api)
+			}
+		}
+	}
 }
 
 func (s *Stats) Marshal() (string, error) {
