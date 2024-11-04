@@ -66,21 +66,9 @@ func IncrementDescribeTagsCounter(isSuccess bool) {
 	log.Println("Current counters:", describeTagsCounters.Counters)
 }
 
-// GetDescribeTagsCounters retrieves the current values of the counters
-func GetDescribeTagsCounters() []int {
-	counterMutex.Lock()
-	copyList := describeTagsCounters.Counters
-	counterMutex.Unlock()
-	log.Println("Retrieved describeTagsCounters:", copyList)
-
-	return copyList
-
-}
-
 // Update the flagStats with current counter values
 func (p *flagStats) update() {
 	log.Println("Updating flagStats with current counters")
-	counters := GetDescribeTagsCounters()
 	p.stats.Store(agent.Stats{
 		ImdsFallbackSucceed:       boolToSparseInt(p.flagSet.IsSet(agent.FlagIMDSFallbackSuccess)),
 		SharedConfigFallback:      boolToSparseInt(p.flagSet.IsSet(agent.FlagSharedConfigFallback)),
@@ -89,7 +77,6 @@ func (p *flagStats) update() {
 		RunningInContainer:        boolToInt(p.flagSet.IsSet(agent.FlagRunningInContainer)),
 		Mode:                      p.flagSet.GetString(agent.FlagMode),
 		RegionType:                p.flagSet.GetString(agent.FlagRegionType),
-		DescribeTagsApiCounts:     counters,
 	})
 	log.Printf("Updated flagStats: %+v", p.stats.Load())
 }
