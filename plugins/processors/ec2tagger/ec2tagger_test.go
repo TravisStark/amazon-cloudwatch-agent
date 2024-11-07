@@ -6,6 +6,14 @@ package ec2tagger
 import (
 	"context"
 	"errors"
+	"github.com/amazon-contributing/opentelemetry-collector-contrib/extension/awsmiddleware"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/stretchr/testify/mock"
+	"go.opentelemetry.io/collector/component"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
@@ -641,4 +649,71 @@ func TestTaggerStartsWithoutTagOrVolume(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, tagger.started, true)
 	close(inited)
+}
+
+func TestEC2ClientMiddleware(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY_ID", "test")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "test")
+	newType, _ := component.NewType("test")
+	id := component.NewID(newType)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region:      aws.String("us-west-2"),
+		Endpoint:    aws.String(server.URL),
+		Credentials: credentials.NewStaticCredentials("test", "test", ""),
+	}))
+	ec2Client := ec2.New(sess)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.RefreshIntervalSeconds = 0 * time.Second
+	cfg.EC2MetadataTags = []string{mdKeyInstanceId, mdKeyImageId, mdKeyInstanceType}
+	cfg.EC2InstanceTagKeys = []string{tagKey1, tagKey2, "AutoScalingGroupName"}
+	cfg.EBSDeviceKeys = []string{device1, device2}
+	cfg.MiddlewareID = &id
+	_, cancel := context.WithCancel(context.Background())
+	ec2Provider := func(*configaws.CredentialConfig) ec2iface.EC2API {
+		return ec2Client
+	}
+	volumeCache := &mockVolumeCache{cache: make(map[string]string)}
+
+	backoffSleepArray = []time.Duration{10 * time.Millisecond, 20 * time.Millisecond, 30 * time.Millisecond}
+	defaultRefreshInterval = 50 * time.Millisecond
+	tagger := &Tagger{
+		Config:            cfg,
+		logger:            processortest.NewNopCreateSettings().Logger,
+		cancelFunc:        cancel,
+		metadataProvider:  &mockMetadataProvider{InstanceIdentityDocument: mockedInstanceIdentityDoc},
+		ec2Provider:       ec2Provider,
+		volumeSerialCache: volumeCache,
+	}
+
+	ctx := context.Background()
+	handler := new(awsmiddleware.MockHandler)
+	handler.On("ID").Return("test")
+	handler.On("Position").Return(awsmiddleware.After)
+	handler.On("HandleRequest", mock.Anything, mock.Anything)
+	handler.On("HandleResponse", mock.Anything, mock.Anything)
+
+	middleware := new(awsmiddleware.MockMiddlewareExtension)
+	middleware.On("Handlers").Return([]awsmiddleware.RequestHandler{handler}, []awsmiddleware.ResponseHandler{handler})
+	extensions := map[component.ID]component.Component{id: middleware}
+	host := new(awsmiddleware.MockExtensionsHost)
+	host.On("GetExtensions").Return(extensions)
+
+	require.NoError(t, tagger.Start(ctx, host))
+
+	_, err := tagger.ec2API.DescribeInstances(&ec2.DescribeInstancesInput{})
+	assert.NoError(t, err)
+
+	// Assert that the middleware handlers were called during the request
+	handler.AssertCalled(t, "HandleRequest", mock.Anything, mock.Anything)
+	handler.AssertCalled(t, "HandleResponse", mock.Anything, mock.Anything)
+
+	// Shutdown Tagger
+	require.NoError(t, tagger.Shutdown(ctx))
 }
